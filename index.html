@@ -593,8 +593,26 @@ function renderCard(d) {
 }
 
 function tryParse(raw) {
-  if (typeof raw==='object'&&raw!==null) { if (raw.keyword) return raw; if (raw.output) return tryParse(raw.output); return null; }
-  if (typeof raw==='string') { try { const p=JSON.parse(raw.replace(/```json|```/g,'').trim()); if (p.keyword) return p; if (p.output) return tryParse(p.output); } catch(_){} }
+  if (typeof raw === 'object' && raw !== null) {
+    if (raw.keyword) return raw;
+    // handle { formattedResponse: "{...}", sessionId: "..." }
+    if (raw.formattedResponse) return tryParse(raw.formattedResponse);
+    if (raw.output) return tryParse(raw.output);
+    if (raw.response) return tryParse(raw.response);
+    if (raw.text) return tryParse(raw.text);
+    if (raw.message) return tryParse(raw.message);
+    return null;
+  }
+  if (typeof raw === 'string') {
+    try {
+      // strip markdown fences and extra whitespace
+      const clean = raw.replace(/```json|```/g, '').trim();
+      const p = JSON.parse(clean);
+      if (p.keyword) return p;
+      if (p.formattedResponse) return tryParse(p.formattedResponse);
+      if (p.output) return tryParse(p.output);
+    } catch(_) {}
+  }
   return null;
 }
 
